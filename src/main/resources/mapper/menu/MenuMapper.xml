@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.shibofu.menu.dao.MenuDao">
+
+    <!--菜谱列表Map-->
+    <resultMap id="menuListMap" type="com.shibofu.menu.model.MenuList">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="img" property="img"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="recent_time" property="recentTime"/>
+        <collection property="menuDetails" column="id" ofType="com.shibofu.menu.model.MenuDetail"
+                    select="getMenuDetails"/>
+    </resultMap>
+
+    <!--菜谱详情Map-->
+    <resultMap id="menuEntityMap" type="com.shibofu.menu.model.MenuEntity">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="img" property="img"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="recent_time" property="recentTime"/>
+        <collection property="menuDetails" column="id" ofType="com.shibofu.menu.model.MenuDetail"
+                    select="getMenuDetails"/>
+        <collection property="steps" column="id" ofType="com.shibofu.menu.model.Step"
+                    select="getSteps"/>
+    </resultMap>
+
+    <!--获取菜谱列表-->
+    <select id="getMenuList" parameterType="java.lang.Integer" resultMap="menuListMap">
+        SELECT *
+        FROM menu
+        WHERE (type = 'PUBLIC' OR user_id = #{userId}) AND is_delete = 0
+        <if test="keyWord != null and keyWord != ''">
+            AND `name` RLIKE #{keyWord}
+        </if>
+    </select>
+
+    <!--获取菜谱详情-->
+    <select id="getMenu" parameterType="java.lang.Integer" resultMap="menuEntityMap">
+        SELECT *
+        FROM menu
+        WHERE id = #{id}
+    </select>
+
+    <!--获取菜谱食材详情-->
+    <select id="getMenuDetails" parameterType="java.lang.Integer" resultType="com.shibofu.menu.model.MenuDetail">
+        SELECT id,
+            menu_id menuId,
+            ingredient_name ingredientName,
+            unit,
+            num
+        FROM menu_detail
+        WHERE menu_id = #{id}
+    </select>
+
+    <!--获取菜谱烹饪步骤-->
+    <select id="getSteps" parameterType="java.lang.Integer" resultType="com.shibofu.menu.model.Step">
+        SELECT id,
+            menu_id menuId,
+            sort,
+            img,
+            description
+        FROM step
+        WHERE menu_id = #{id}
+        ORDER BY sort ASC
+    </select>
+
+    <!--更新烹饪时间-->
+    <update id="updateRecentTime" parameterType="java.lang.Integer">
+        UPDATE menu
+        SET recent_time = now()
+        WHERE id = #{id}
+    </update>
+
+    <!--插入主菜谱-->
+    <insert id="insertMenu" parameterType="com.shibofu.menu.model.MenuEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO menu(user_id, name, type, img, remark, create_time)
+            VALUE (#{userId}, #{name}, #{type}, #{img}, #{remark}, NOW())
+    </insert>
+
+    <!--插入菜谱详情-->
+    <insert id="insertMenuDetails" parameterType="com.shibofu.menu.model.MenuDetail" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO menu_detail(menu_id, ingredient_name, unit, num)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.menuId}, #{item.ingredientName}, #{item.unit}, #{item.num})
+        </foreach>
+    </insert>
+
+    <!--插入步骤详情-->
+    <insert id="insertSteps" parameterType="com.shibofu.menu.model.Step" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO step(menu_id, sort, img, description)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.menuId}, #{item.sort}, #{item.img}, #{item.description})
+        </foreach>
+    </insert>
+
+    <!--删除菜谱-->
+    <update id="deleteMenu" parameterType="java.lang.Integer">
+        UPDATE menu
+        SET is_delete = 1
+        WHERE id = #{id}
+    </update>
+</mapper>

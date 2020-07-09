@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.shibofu.base.dao.BaseDao">
+    <!--通过文件md5获取数据库中存在的文件名-->
+    <select id="getFileNameByMd5" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT file_name
+        FROM oss_img
+        WHERE md5 = #{md5}
+    </select>
+
+    <!--插入OssImg-->
+    <insert id="insertOssImg" parameterType="com.shibofu.base.model.OssImg" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO oss_img (file_name, md5) VALUE (#{fileName}, #{md5})
+    </insert>
+</mapper>
